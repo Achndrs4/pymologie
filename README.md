@@ -1,5 +1,5 @@
 # Pymologie: Wortherkünfte in der deutschen Sprache
-
+![alt text](https://github.com/Achndrs4/pymologie/blob/main/src/resources/pymologie.gif?raw=true)
 ## Hinweise 
 Implementierung ist nur mit dieser [Quelle](https://github.com/droher/etymology-db) und ihrer Lizenz möglich. In diesem Geist ist diese Repo auch mit dem MIT Lizenz veröffentlicht. Hierunter finden Sie eine (inoffiziel) Übersetzung dieses Lizenzes.
  
