@@ -1,7 +1,7 @@
 # __main__.py
 
 import sys
-from src.pymologie import pymologie
+from pymologie import pymologie
 
 def main():
     pym = pymologie()

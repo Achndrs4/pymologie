@@ -10,7 +10,7 @@ class pymologie:
         
     def cache(self):
         self.data = dict()
-        with open('src/resources/etymologie.csv', 'r') as file:
+        with open('resources/etymologie.csv', 'r') as file:
             reader = csv.reader(file)
             for row in reader:
                 if (term := row[0]) not in self.data:
