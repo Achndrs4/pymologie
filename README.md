@@ -1,16 +1,56 @@
 # Pymologie: Wortherkünfte in der deutschen Sprache
-![alt text](https://github.com/Achndrs4/pymologie/blob/main/src/resources/pymologie.gif?raw=true)
+![alt text](https://github.com/Achndrs4/pymologie/blob/main/src/pymologie/resources/pymologie.gif?raw=true)
 ## Hinweise 
 Implementierung ist nur mit dieser [Quelle](https://github.com/droher/etymology-db) und ihrer Lizenz möglich. In diesem Geist ist diese Repo auch mit dem MIT Lizenz veröffentlicht. Hierunter finden Sie eine (inoffiziel) Übersetzung dieses Lizenzes.
  
 ## Einstellungen 
-1. Bitte nur mit Python >= 3.8 benutzen
-2. Mit [pip](https://docs.python.org/3/installing/index.html) >=19.10 installieren im Projectort mit folgendem Befehl:
+1. Bitte nur mit Python >= 3.9 benutzen
+2. Mit [pip](https://docs.python.org/3/installing/index.html) installieren im Projectort mit folgendem Befehl:
    1. pip3 install pymologie
-   
-## Gebrauch
-1. Das Project Importieren mit folgendem Befehl:
-   1. import pymologie
+
+## Usage
+
+`pymologie` derives a German word's full etymology as a tree, since a
+word's stem can itself be a word with its own further-back origins.
+
+```python
+import pymologie
+
+# A Node tree: the root is the word you looked up, each child is a
+# direct origin, and each of those can have its own children going
+# further back.
+node = pymologie.tree("Haus")
+print(node)
+# Haus
+# ├── hūs (Middle High German, 1050 n.u.Z. - 1500 n.u.Z.)
+# ├── hūs (Old High German, 750 n.u.Z. - 1050 n.u.Z.)
+# ├── *hūs (Proto-West Germanic, vor 500 n.u.Z. (unbestätigt))
+# └── *hūsą (Proto-Germanic, 500 v.u.Z. - 500 n.u.Z.)
+
+node.to_dict()                              # recursive dict, e.g. for json.dumps(...)
+pymologie.origins("Haus")                   # flat list of direct Origin(word, language, period)
+pymologie.analyze(["Haus", "Katze"])        # Counter of language frequency
+```
+
+For a custom dataset, or more control, use the `Etymology` class directly:
+
+```python
+from pymologie import Etymology
+
+etym = Etymology()
+etym.tree("Haus", max_depth=5)
+
+# or point at your own CSV entirely (same Term,Stamm,Sprache,Zeitraum shape)
+etym = Etymology(data_path="path/to/your.csv")
+```
+
+### CLI
+
+```
+pymologie Haus
+pymologie Haus --json
+pymologie Haus --max-depth 3
+```
 
 ## MIT Lizenz
 Jedem, der eine Kopie dieser Software und der zugehörigen Dokumentationsdateien (die „Software“) erhält, wird hiermit kostenlos die Erlaubnis erteilt, ohne Einschränkung mit der Software zu handeln, einschließlich und ohne Einschränkung der Rechte zur Nutzung, zum Kopieren, Ändern, Zusammenführen, Veröffentlichen, Verteilen, Unterlizenzieren und/oder Verkaufen von Kopien der Software, und Personen, denen die Software zur Verfügung gestellt wird, dies unter den folgenden Bedingungen zu gestatten:
