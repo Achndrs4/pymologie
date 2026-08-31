@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pymologie"
+version = "2.0.0"
+description = "Derive the etymology tree of German words"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+authors = [
+    { name = "Ani Chandrashekhar", email = "ani.chandrashekhar@gmail.com" },
+]
+keywords = ["pymologie", "etymologie", "wortherkunft", "wortherkünfte", "etymology", "german"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Natural Language :: German",
+]
+
+[project.urls]
+Homepage = "https://github.com/Achndrs4/pymologie"
+
+[project.scripts]
+pymologie = "pymologie.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pymologie = ["resources/*.csv", "resources/*.gif"]
