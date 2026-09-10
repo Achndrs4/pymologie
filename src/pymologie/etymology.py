@@ -1,4 +1,4 @@
-"""Loading and querying etymology data."""
+"""Loading and querying etymology data for a given language."""
 
 from __future__ import annotations
 
@@ -10,26 +10,42 @@ from typing import Dict, Iterable, List, Optional, Union
 
 from .tree import Node, Origin, build_tree
 
-_DEFAULT_RESOURCE = "de.csv"
+#: Supported language codes and the bundled CSV each one loads.
+LANGUAGES: Dict[str, str] = {
+    "de": "de.csv",
+    "ta": "ta.csv",
+    "sa": "sa.csv",
+}
 
 
 class Etymology:
-    """Looks up word origins and builds etymology trees.
+    """Looks up word origins in one language and builds etymology trees.
 
-    By default, data is loaded from the bundled German dataset. Pass
-    ``data_path`` to load a different dataset instead (e.g. in tests).
+    By default, data is loaded from the bundled CSV for ``language`` (one of
+    :data:`LANGUAGES`). Pass ``data_path`` to load a different dataset
+    instead (e.g. in tests, or a dataset for a language not bundled here).
     """
 
-    def __init__(self, data_path: Optional[Union[str, Path]] = None) -> None:
-        self._data: Dict[str, List[Origin]] = self._load(data_path)
+    def __init__(
+        self,
+        language: str = "de",
+        data_path: Optional[Union[str, Path]] = None,
+    ) -> None:
+        self.language = language
+        self._data: Dict[str, List[Origin]] = self._load(language, data_path)
 
     @staticmethod
-    def _load(data_path: Optional[Union[str, Path]]) -> Dict[str, List[Origin]]:
+    def _load(language: str, data_path: Optional[Union[str, Path]]) -> Dict[str, List[Origin]]:
         data: Dict[str, List[Origin]] = {}
         if data_path is not None:
             context = open(data_path, "r", encoding="utf-8", newline="")
         else:
-            context = resources.files("pymologie.resources").joinpath(_DEFAULT_RESOURCE).open(
+            try:
+                filename = LANGUAGES[language]
+            except KeyError:
+                available = ", ".join(sorted(LANGUAGES))
+                raise ValueError(f"unknown language {language!r}; available: {available}") from None
+            context = resources.files("pymologie.resources").joinpath(filename).open(
                 "r", encoding="utf-8", newline=""
             )
         with context as file:

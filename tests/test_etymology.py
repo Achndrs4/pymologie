@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from pymologie import Etymology, Origin
+from pymologie import LANGUAGES, Etymology, Origin
 
 FIXTURE = Path(__file__).parent / "fixtures" / "mini_etymologie.csv"
 
@@ -29,3 +29,14 @@ def test_analyze_counts_languages(etymology: Etymology) -> None:
         "Mittelhochdeutsch": 2,
         "Althochdeutsch": 1,
     }
+
+
+def test_unknown_language_raises() -> None:
+    with pytest.raises(ValueError):
+        Etymology(language="xx")
+
+
+@pytest.mark.parametrize("language", sorted(LANGUAGES))
+def test_bundled_dataset_loads_and_is_non_empty(language: str) -> None:
+    etymology = Etymology(language=language)
+    assert len(etymology._data) > 0

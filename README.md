@@ -10,26 +10,35 @@ Implementierung ist nur mit dieser [Quelle](https://github.com/droher/etymology-
 
 ## Usage
 
-`pymologie` derives a German word's full etymology as a tree, since a
-word's stem can itself be a word with its own further-back origins.
+`pymologie` derives a word's full etymology as a tree, since a word's stem
+can itself be a word with its own further-back origins. **German (`de`),
+Tamil (`ta`), and Sanskrit (`sa`)** are bundled.
 
 ```python
 import pymologie
 
 # A Node tree: the root is the word you looked up, each child is a
 # direct origin, and each of those can have its own children going
-# further back.
+# further back. `language` defaults to "de".
 node = pymologie.tree("Haus")
 print(node)
 # Haus
-# ├── hūs (Middle High German, 1050 n.u.Z. - 1500 n.u.Z.)
-# ├── hūs (Old High German, 750 n.u.Z. - 1050 n.u.Z.)
-# ├── *hūs (Proto-West Germanic, vor 500 n.u.Z. (unbestätigt))
-# └── *hūsą (Proto-Germanic, 500 v.u.Z. - 500 n.u.Z.)
+# ├── hūs (Mittelhochdeutsch, 1050 n.u.Z. - 1500 n.u.Z.)
+# ├── hūs (Althochdeutsch, 750 n.u.Z. - 1050)
+# ├── *hūs (Westurgermanisch, nicht verfügbar)
+# └── *hūsą (Urgermanisch, 500 v.u.Z. - 500 n.u.Z.)
+
+print(pymologie.tree("குரு", language="ta"))
+# குரு
+# └── गुरु (Sanskrit, 1500 BCE - present (liturgical/classical))
+#         ├── *gr̥Húṣ (Proto-Indo-Aryan, 2000 BCE - 1500 BCE)
+#         ├── *gr̥Húš (Proto-Indo-Iranian, 2200 BCE - 1800 BCE)
+#         └── *gʷréh₂us (Proto-Indo-European, 4500 BCE - 2500 BCE)
 
 node.to_dict()                              # recursive dict, e.g. for json.dumps(...)
 pymologie.origins("Haus")                   # flat list of direct Origin(word, language, period)
 pymologie.analyze(["Haus", "Katze"])        # Counter of language frequency
+pymologie.LANGUAGES                         # {"de": "de.csv", "ta": "ta.csv", "sa": "sa.csv"}
 ```
 
 For a custom dataset, or more control, use the `Etymology` class directly:
@@ -37,8 +46,8 @@ For a custom dataset, or more control, use the `Etymology` class directly:
 ```python
 from pymologie import Etymology
 
-etym = Etymology()
-etym.tree("Haus", max_depth=5)
+etym = Etymology(language="sa")
+etym.tree("गुरु", max_depth=5)
 
 # or point at your own CSV entirely (same Term,Stamm,Sprache,Zeitraum shape)
 etym = Etymology(data_path="path/to/your.csv")
@@ -50,6 +59,8 @@ etym = Etymology(data_path="path/to/your.csv")
 pymologie Haus
 pymologie Haus --json
 pymologie Haus --max-depth 3
+pymologie --language ta குரு
+pymologie --language sa गुरु
 ```
 
 ## MIT Lizenz
