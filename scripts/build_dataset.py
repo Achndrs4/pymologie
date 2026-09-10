@@ -56,6 +56,9 @@ DEFAULT_LANGUAGES = {
     "German": "de",
     "Tamil": "ta",
     "Sanskrit": "sa",
+    "Telugu": "te",
+    "Malayalam": "ml",
+    "Kannada": "kn",
 }
 
 RESOURCES_DIR = Path(__file__).resolve().parent.parent / "src" / "pymologie" / "resources"
@@ -204,8 +207,16 @@ DEFAULT_PERIODS: Dict[str, str] = {
     "Tamil": "300 BCE - present",
     "Old Tamil": "300 BCE - 700 CE",
     "Middle Tamil": "700 CE - 1600 CE",
+    "Telugu": "600 CE - present",
+    "Old Telugu": "600 CE - 1100 CE",
+    "Kannada": "450 CE - present",
+    "Old Kannada": "450 CE - 1200 CE",
+    "Middle Kannada": "1200 CE - 1700 CE",
+    "Malayalam": "1200 CE - present (disputed)",
+    "Old Malayalam": "900 CE - 1400 CE",
     "Proto-Dravidian": "3000 BCE - 1500 BCE (disputed)",
     "Proto-South Dravidian": "1500 BCE - 500 BCE",
+    "Proto-South-Central Dravidian": "1000 BCE - 200 BCE (disputed)",
     "German": "750 CE - present",
     "Old High German": "750 CE - 1050 CE",
     "Middle High German": "1050 CE - 1500 CE",

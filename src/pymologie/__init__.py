@@ -1,4 +1,4 @@
-"""pymologie: etymology trees for German, Tamil, and Sanskrit words.
+"""pymologie: etymology trees for German, Tamil, Sanskrit, Telugu, Malayalam, and Kannada words.
 
     >>> import pymologie
     >>> print(pymologie.tree("Haus"))

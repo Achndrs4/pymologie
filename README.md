@@ -12,7 +12,8 @@ Implementierung ist nur mit dieser [Quelle](https://github.com/droher/etymology-
 
 `pymologie` derives a word's full etymology as a tree, since a word's stem
 can itself be a word with its own further-back origins. **German (`de`),
-Tamil (`ta`), and Sanskrit (`sa`)** are bundled.
+Tamil (`ta`), Sanskrit (`sa`), Telugu (`te`), Malayalam (`ml`), and
+Kannada (`kn`)** are bundled.
 
 ```python
 import pymologie
@@ -38,7 +39,7 @@ print(pymologie.tree("குரு", language="ta"))
 node.to_dict()                              # recursive dict, e.g. for json.dumps(...)
 pymologie.origins("Haus")                   # flat list of direct Origin(word, language, period)
 pymologie.analyze(["Haus", "Katze"])        # Counter of language frequency
-pymologie.LANGUAGES                         # {"de": "de.csv", "ta": "ta.csv", "sa": "sa.csv"}
+pymologie.LANGUAGES                         # {"de": "de.csv", "ta": "ta.csv", "sa": "sa.csv", ...}
 ```
 
 For a custom dataset, or more control, use the `Etymology` class directly:
@@ -61,15 +62,18 @@ pymologie Haus --json
 pymologie Haus --max-depth 3
 pymologie --language ta குரு
 pymologie --language sa गुरु
+pymologie --language te తెలుగు
+pymologie --language ml മലയാളം
+pymologie --language kn ಗುರು
 ```
 
 ### Where the data comes from
 
-The bundled `de.csv`/`ta.csv`/`sa.csv` datasets are filtered from
+The bundled per-language CSVs are filtered from
 [droher/etymology-db](https://github.com/droher/etymology-db), a
 Wiktionary-derived graph of etymological relationships covering ~2900
-languages. `scripts/build_dataset.py` walks that dump outward from German,
-Tamil, and Sanskrit terms and writes just the reachable rows into
+languages. `scripts/build_dataset.py` walks that dump outward from each
+bundled language's terms and writes just the reachable rows into
 `src/pymologie/resources/`, which is what the pip package actually ships.
 
 To regenerate the bundled data yourself (e.g. after a newer etymology-db

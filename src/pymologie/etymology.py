@@ -15,6 +15,9 @@ LANGUAGES: Dict[str, str] = {
     "de": "de.csv",
     "ta": "ta.csv",
     "sa": "sa.csv",
+    "te": "te.csv",
+    "ml": "ml.csv",
+    "kn": "kn.csv",
 }
 
 
