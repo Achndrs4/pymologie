@@ -3,10 +3,10 @@
     >>> import pymologie
     >>> print(pymologie.tree("Haus"))
     Haus
-    ├── hūs (Mittelhochdeutsch, 1050 n.u.Z. - 1500 n.u.Z.)
-    ├── hūs (Althochdeutsch, 750 n.u.Z. - 1050)
-    ├── *hūs (Westurgermanisch, nicht verfügbar)
-    └── *hūsą (Urgermanisch, 500 v.u.Z. - 500 n.u.Z.)
+    ├── hūs (Middle High German, 1050 CE - 1500 CE)
+    ├── hūs (Old High German, 750 CE - 1050 CE)
+    ├── *hūs (Proto-West Germanic, before 500 CE (unconfirmed))
+    └── *hūsą (Proto-Germanic, 500 BCE - 500 CE)
 
     >>> print(pymologie.tree("मरण", language="sa"))
 """

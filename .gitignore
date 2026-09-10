@@ -6,3 +6,8 @@ build/
 dist/
 .venv/
 .idea/
+
+# raw etymology-db dump used by scripts/build_dataset.py -- large,
+# and not something we want to ship or commit
+/etymology.csv
+/etymology.csv.gz

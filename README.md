@@ -23,10 +23,10 @@ import pymologie
 node = pymologie.tree("Haus")
 print(node)
 # Haus
-# ├── hūs (Mittelhochdeutsch, 1050 n.u.Z. - 1500 n.u.Z.)
-# ├── hūs (Althochdeutsch, 750 n.u.Z. - 1050)
-# ├── *hūs (Westurgermanisch, nicht verfügbar)
-# └── *hūsą (Urgermanisch, 500 v.u.Z. - 500 n.u.Z.)
+# ├── hūs (Middle High German, 1050 CE - 1500 CE)
+# ├── hūs (Old High German, 750 CE - 1050 CE)
+# ├── *hūs (Proto-West Germanic, before 500 CE (unconfirmed))
+# └── *hūsą (Proto-Germanic, 500 BCE - 500 CE)
 
 print(pymologie.tree("குரு", language="ta"))
 # குரு
@@ -61,6 +61,22 @@ pymologie Haus --json
 pymologie Haus --max-depth 3
 pymologie --language ta குரு
 pymologie --language sa गुरु
+```
+
+### Where the data comes from
+
+The bundled `de.csv`/`ta.csv`/`sa.csv` datasets are filtered from
+[droher/etymology-db](https://github.com/droher/etymology-db), a
+Wiktionary-derived graph of etymological relationships covering ~2900
+languages. `scripts/build_dataset.py` walks that dump outward from German,
+Tamil, and Sanskrit terms and writes just the reachable rows into
+`src/pymologie/resources/`, which is what the pip package actually ships.
+
+To regenerate the bundled data yourself (e.g. after a newer etymology-db
+release), download that project's CSV dump and run:
+
+```
+python scripts/build_dataset.py path/to/etymology-db.csv
 ```
 
 ## MIT Lizenz
