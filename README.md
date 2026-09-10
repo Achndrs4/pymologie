@@ -42,17 +42,93 @@ pymologie.analyze(["Haus", "Katze"])        # Counter of language frequency
 pymologie.LANGUAGES                         # {"de": "de.csv", "ta": "ta.csv", "sa": "sa.csv", ...}
 ```
 
-For a custom dataset, or more control, use the `Etymology` class directly:
+### Reusable settings
+
+Repeating `language=`/`transliterate=` on every call gets old fast — build
+an `Etymology` once and reuse it, either directly or by passing it to the
+top-level functions as `settings=`:
 
 ```python
 from pymologie import Etymology
 
+tamil = Etymology(language="ta", transliterate=True)
+tamil.tree("குரு")          # no need to repeat language/transliterate
+
+# or keep using the flat pymologie.* functions, reusing the same settings:
+pymologie.tree("குரு", settings=tamil)
+pymologie.origins("குரு", settings=tamil)
+```
+
+For a custom dataset, or more control, use the `Etymology` class directly:
+
+```python
 etym = Etymology(language="sa")
 etym.tree("गुरु", max_depth=5)
 
 # or point at your own CSV entirely (same Term,Stamm,Sprache,Zeitraum shape)
 etym = Etymology(data_path="path/to/your.csv")
 ```
+
+### Latin transliteration and search
+
+Pass `transliterate=True` to show the Latin romanization of every non-Latin
+word **alongside** its original script, rather than replacing it — words
+already in Latin script (German, proto-forms, etc.) are left as-is. Tamil,
+Telugu, Kannada, Malayalam, and Sanskrit use ISO 15919 diacritics (the same
+style already used for reconstructed proto-forms like `*gr̥Húṣ`); words that
+trace back to Ancient Greek or Persian/Arabic origins — which show up deep
+in these etymology trees even though they aren't bundled top-level
+languages — use ALA-LC romanization instead:
+
+```python
+print(pymologie.tree("குரு", language="ta", transliterate=True))
+# குரு (kuru)
+# └── गुरு (guru) (Sanskrit, 1500 BCE - present (liturgical/classical))
+#         ├── gr̥Húṣ (Proto-Indo-Aryan, 2000 BCE - 1500 BCE)
+#         ├── gr̥Húš (Proto-Indo-Iranian, 2200 BCE - 1800 BCE)
+#         └── gʷréh₂us (Proto-Indo-European, 4500 BCE - 2500 BCE)
+
+print(pymologie.tree("قهوه", language="sa", transliterate=True))
+# قهوه (qhwh)
+# └── قَهْوَة (qahwah) (Arabic, 600 CE - present)
+```
+
+(Tamil script doesn't mark voiced/voiceless consonants, so a literal
+transliteration of `குரு` is `kuru`, not the phonetic `guru` — that's a
+property of the script itself, not a quirk of this library. Likewise,
+Greek accents and the iota subscript are dropped rather than represented,
+and Persian/Arabic's `و`/`ي` always romanize as consonants (`w`/`y`),
+never as long vowels — telling those apart needs dictionary knowledge this
+library doesn't have. Persian and Arabic also share a few letters that
+ALA-LC romanizes differently between the two languages; this library uses
+one Arabic-flavored table for both.
+
+Persian/Arabic is a right-to-left script, so its output above may look odd
+in a plain-text file — in a terminal or editor that understands Unicode
+bidi, the romanization reliably renders to the right of the original word
+regardless.)
+
+Independent of that flag, you can also look words up **by their Latin
+spelling** instead of native script — useful when your terminal can't
+render Tamil/Telugu/Kannada/Malayalam/Devanagari:
+
+```python
+pymologie.tree("guru", language="ta")   # same as looking up குரு
+```
+
+A Latin-spelled lookup always returns a **list** — one tree/origin-list per
+matching native-script word — even when there's only one match, since the
+same Latin spelling can correspond to more than one native word. Looking
+up a word directly in its native script, or an unknown word, keeps
+returning a single `Node`/flat list exactly as before:
+
+```python
+pymologie.tree("குரு", language="ta")   # -> a single Node, as always
+pymologie.tree("guru", language="ta")   # -> [Node, ...], even if len == 1
+```
+
+`pymologie.transliterate(text)` is also available standalone, for
+romanizing arbitrary text outside of a lookup.
 
 ### CLI
 
@@ -65,6 +141,7 @@ pymologie --language sa गुरु
 pymologie --language te తెలుగు
 pymologie --language ml മലയാളം
 pymologie --language kn ಗುರು
+pymologie --language ta guru --transliterate    # Latin input, romanized output
 ```
 
 ### Where the data comes from

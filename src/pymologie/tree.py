@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import namedtuple
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 Origin = namedtuple("Origin", ["word", "language", "period"])
 
@@ -37,6 +37,8 @@ class Node:
     def __str__(self) -> str:
         return self.render()
 
+    __repr__ = __str__
+
     def to_dict(self) -> dict:
         return {
             "word": self.word,
@@ -44,6 +46,16 @@ class Node:
             "period": self.period,
             "children": [child.to_dict() for child in self.children],
         }
+
+
+def map_tree(node: Node, fn: Callable[[str], str]) -> Node:
+    """Return a copy of ``node`` with ``fn`` applied to every ``word`` in it."""
+    return Node(
+        word=fn(node.word),
+        language=node.language,
+        period=node.period,
+        children=[map_tree(child, fn) for child in node.children],
+    )
 
 
 def build_tree(word: str, data: Dict[str, List[Origin]], max_depth: int = 10) -> Node:

@@ -8,7 +8,8 @@ from importlib import resources
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Union
 
-from .tree import Node, Origin, build_tree
+from .transliteration import annotate_transliteration, transliterate_text
+from .tree import Node, Origin, build_tree, map_tree
 
 #: Supported language codes and the bundled CSV each one loads.
 LANGUAGES: Dict[str, str] = {
@@ -24,18 +25,34 @@ LANGUAGES: Dict[str, str] = {
 class Etymology:
     """Looks up word origins in one language and builds etymology trees.
 
-    By default, data is loaded from the bundled CSV for ``language`` (one of
-    :data:`LANGUAGES`). Pass ``data_path`` to load a different dataset
-    instead (e.g. in tests, or a dataset for a language not bundled here).
+    Construct once and reuse — this instance is itself the reusable
+    "settings" object, so ``language``/``transliterate`` don't need to be
+    passed again on every call. By default, data is loaded from the bundled
+    CSV for ``language`` (one of :data:`LANGUAGES`). Pass ``data_path`` to
+    load a different dataset instead (e.g. in tests, or a dataset for a
+    language not bundled here).
+
+    When ``transliterate`` is ``True``, every non-Latin word in the results
+    gets its Latin romanization (ISO 15919) shown alongside it, e.g.
+    ``"गुरु (guru)"`` — the original script is kept, not replaced, since
+    losing it would make the etymology harder to cross-reference against
+    other sources. Words already in Latin script (German, reconstructed
+    Proto-Indo-European forms, etc.) are left untouched. Regardless of this
+    setting, lookups also accept a word's Latin transliteration as input
+    (e.g. ``"guru"`` as well as ``"குரு"``) for any bundled non-German
+    language.
     """
 
     def __init__(
         self,
         language: str = "de",
         data_path: Optional[Union[str, Path]] = None,
+        transliterate: bool = False,
     ) -> None:
         self.language = language
+        self.transliterate = transliterate
         self._data: Dict[str, List[Origin]] = self._load(language, data_path)
+        self._latin_index: Dict[str, List[str]] = self._build_latin_index(self._data, language)
 
     @staticmethod
     def _load(language: str, data_path: Optional[Union[str, Path]]) -> Dict[str, List[Origin]]:
@@ -59,17 +76,69 @@ class Etymology:
                 data.setdefault(term, []).append(Origin(*row[1:]))
         return data
 
-    def origins(self, word: str) -> List[Origin]:
-        """Direct origins of ``word``, or an empty list if unknown."""
-        return list(self._data.get(word, []))
+    @staticmethod
+    def _build_latin_index(data: Dict[str, List[Origin]], language: str) -> Dict[str, List[str]]:
+        if language == "de":
+            return {}
+        index: Dict[str, List[str]] = {}
+        for term in data:
+            latin = transliterate_text(term).lower()
+            if latin != term.lower():
+                index.setdefault(latin, []).append(term)
+        return index
 
-    def tree(self, word: str, max_depth: int = 10) -> Node:
-        """Build the full etymology tree for ``word``."""
-        return build_tree(word, self._data, max_depth=max_depth)
+    def _resolve(self, word: str) -> List[str]:
+        """Native term(s) matching ``word`` when it was given as a Latin spelling."""
+        return self._latin_index.get(word.lower(), [])
+
+    def _finalize_origins(self, origins: List[Origin]) -> List[Origin]:
+        if not self.transliterate:
+            return origins
+        return [Origin(annotate_transliteration(o.word), o.language, o.period) for o in origins]
+
+    def _finalize_node(self, node: Node) -> Node:
+        if not self.transliterate:
+            return node
+        return map_tree(node, annotate_transliteration)
+
+    def origins(self, word: str) -> Union[List[Origin], List[List[Origin]]]:
+        """Direct origins of ``word``.
+
+        A direct native-script match (or an unknown word) returns a flat
+        list, exactly as before (``[]`` when unknown). A Latin spelling
+        always resolves to a list of lists — one per matching native word —
+        even when there's only a single match.
+        """
+        if word in self._data:
+            return self._finalize_origins(list(self._data[word]))
+        matches = self._resolve(word)
+        if not matches:
+            return []
+        return [self._finalize_origins(list(self._data[term])) for term in matches]
+
+    def tree(self, word: str, max_depth: int = 10) -> Union[Node, List[Node]]:
+        """Build the full etymology tree for ``word``.
+
+        A direct native-script match (or an unknown word) returns a single
+        :class:`Node`, exactly as before. A Latin spelling always resolves
+        to a list of trees — one per matching native word — even when
+        there's only a single match.
+        """
+        if word in self._data:
+            return self._finalize_node(build_tree(word, self._data, max_depth=max_depth))
+        matches = self._resolve(word)
+        if not matches:
+            return self._finalize_node(build_tree(word, self._data, max_depth=max_depth))
+        return [
+            self._finalize_node(build_tree(term, self._data, max_depth=max_depth))
+            for term in matches
+        ]
 
     def analyze(self, words: Iterable[str]) -> Counter:
         """Count how often each language appears among the direct origins of ``words``."""
         language_counts: Counter = Counter()
         for word in words:
-            language_counts.update(origin.language for origin in self._data.get(word, []))
+            terms = [word] if word in self._data else self._resolve(word)
+            for term in terms:
+                language_counts.update(origin.language for origin in self._data.get(term, []))
         return language_counts

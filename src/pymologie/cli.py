@@ -11,7 +11,7 @@ from .etymology import LANGUAGES, Etymology
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="pymologie", description="Show a word's etymology tree.")
-    parser.add_argument("word", help="the word to look up")
+    parser.add_argument("word", help="the word to look up (native script or Latin transliteration)")
     parser.add_argument(
         "--language",
         "-l",
@@ -20,19 +20,31 @@ def main(argv=None) -> int:
         help="language dataset to use (default: de)",
     )
     parser.add_argument("--max-depth", type=int, default=10, help="maximum tree depth (default: 10)")
+    parser.add_argument(
+        "--transliterate",
+        "-t",
+        action="store_true",
+        help="romanize output to Latin script (ISO 15919)",
+    )
     parser.add_argument("--json", action="store_true", help="print the tree as JSON instead of ASCII art")
     args = parser.parse_args(argv)
 
-    node = Etymology(language=args.language).tree(args.word, max_depth=args.max_depth)
+    etymology = Etymology(language=args.language, transliterate=args.transliterate)
+    result = etymology.tree(args.word, max_depth=args.max_depth)
+    nodes = result if isinstance(result, list) else [result]
 
-    if not node.children:
+    if not any(node.children for node in nodes):
         print(f"no results for: {args.word}", file=sys.stderr)
         return 1
 
     if args.json:
-        print(json.dumps(node.to_dict(), ensure_ascii=False, indent=2))
+        payload = [node.to_dict() for node in nodes] if isinstance(result, list) else nodes[0].to_dict()
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
     else:
-        print(node)
+        for i, node in enumerate(nodes):
+            if len(nodes) > 1:
+                print(f"=== match {i + 1}: {node.word} ===")
+            print(node)
     return 0
 
 
