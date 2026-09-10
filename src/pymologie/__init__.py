@@ -17,7 +17,7 @@ from typing import Dict, Iterable, List, Optional
 from .etymology import LANGUAGES, Etymology
 from .tree import Node, Origin
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 __all__ = ["Etymology", "Node", "Origin", "LANGUAGES", "tree", "origins", "analyze"]
 
 _defaults: Dict[str, Etymology] = {}
