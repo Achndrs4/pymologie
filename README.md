@@ -1,34 +1,30 @@
-# Pymologie: Wortherkünfte in der deutschen Sprache
+# Pymologie : Etymology Finder 
 ![alt text](https://github.com/Achndrs4/pymologie/blob/main/src/pymologie/resources/pymologie.gif?raw=true)
-## Hinweise 
-Implementierung ist nur mit dieser [Quelle](https://github.com/droher/etymology-db) und ihrer Lizenz möglich. In diesem Geist ist diese Repo auch mit dem MIT Lizenz veröffentlicht. Hierunter finden Sie eine (inoffiziel) Übersetzung dieses Lizenzes.
- 
-## Einstellungen 
-1. Bitte nur mit Python >= 3.9 benutzen
-2. Mit [pip](https://docs.python.org/3/installing/index.html) installieren im Projectort mit folgendem Befehl:
-   1. pip3 install pymologie
 
 ## Usage
 
 `pymologie` derives a word's full etymology as a tree, since a word's stem
-can itself be a word with its own further-back origins. **German (`de`),
+can itself be a word with its own further-back origins. **English (`en`)**
+ships bundled and works immediately after `pip install`. **German (`de`),
 Tamil (`ta`), Sanskrit (`sa`), Telugu (`te`), Malayalam (`ml`), and
-Kannada (`kn`)** are bundled.
+Kannada (`kn`)** are also supported but download on demand — see
+[Downloading language packs](#downloading-language-packs) below.
 
 ```python
 import pymologie
 
 # A Node tree: the root is the word you looked up, each child is a
 # direct origin, and each of those can have its own children going
-# further back. `language` defaults to "de".
-node = pymologie.tree("Haus")
+# further back. `language` defaults to "en".
+node = pymologie.tree("house")
 print(node)
-# Haus
-# ├── hūs (Middle High German, 1050 CE - 1500 CE)
-# ├── hūs (Old High German, 750 CE - 1050 CE)
-# ├── *hūs (Proto-West Germanic, before 500 CE (unconfirmed))
-# └── *hūsą (Proto-Germanic, 500 BCE - 500 CE)
+# house
+# ├── hous (Middle English, 1150 CE - 1500 CE)
+# ├── hūs (Old English, 450 CE - 1150 CE)
+# ├── *hūsą (Proto-Germanic, 500 BCE - 500 CE)
+# └── *(s)kews- (Proto-Indo-European, 4500 BCE - 2500 BCE)
 
+pymologie.download_language("ta")           # one-time, per language
 print(pymologie.tree("குரு", language="ta"))
 # குரு
 # └── गुरु (Sanskrit, 1500 BCE - present (liturgical/classical))
@@ -37,10 +33,49 @@ print(pymologie.tree("குரு", language="ta"))
 #         └── *gʷréh₂us (Proto-Indo-European, 4500 BCE - 2500 BCE)
 
 node.to_dict()                              # recursive dict, e.g. for json.dumps(...)
-pymologie.origins("Haus")                   # flat list of direct Origin(word, language, period)
-pymologie.analyze(["Haus", "Katze"])        # Counter of language frequency
-pymologie.LANGUAGES                         # {"de": "de.csv", "ta": "ta.csv", "sa": "sa.csv", ...}
+pymologie.origins("house")                  # flat list of direct Origin(word, language, period)
+pymologie.analyze(["house", "cat"])         # Counter of language frequency
+pymologie.LANGUAGES                         # {"en": "en.csv", "de": "de.csv", "ta": "ta.csv", ...}
 ```
+
+### Downloading language packs
+
+Every language except English needs its data pack downloaded once before
+use — this is a deliberate, explicit step (never a silent network call from
+`tree()`/`origins()`/`analyze()`), so it's clear when a lookup needs one:
+
+```python
+pymologie.download_language("de")           # fetches and caches de.csv
+pymologie.tree("Haus", language="de")       # now works
+
+pymologie.tree("Haus", language="de")       # BEFORE downloading: raises
+# pymologie.LanguagePackNotFoundError: language pack 'de' isn't downloaded.
+# Run: pymologie download de  (or pymologie.download_language('de'))
+```
+
+Packs are fetched from this project's own GitHub repo (pinned to the tag
+matching your installed `pymologie` version, so the data you get always
+matches the code you're running) and cached in `~/.cache/pymologie` —
+override the location with the `PYMOLOGIE_CACHE_DIR` environment variable.
+Pass `force=True` to `download_language` to re-fetch a pack that's already
+cached.
+
+From the CLI:
+
+```
+pymologie --download de
+pymologie Haus --language de
+```
+
+#### Migrating from 2.x
+
+Two changes in 3.0 affect existing code:
+- **The default language changed from `de` to `en`.** Any call that relied
+  on the implicit default (`pymologie.tree(word)` with no `language=`) now
+  looks up English, not German — pass `language="de"` explicitly to keep
+  the old behavior.
+- **Non-English languages now require `download_language(...)` first.**
+  This includes `de` — it's no longer bundled in the wheel.
 
 ### Reusable settings
 
@@ -133,9 +168,11 @@ romanizing arbitrary text outside of a lookup.
 ### CLI
 
 ```
-pymologie Haus
-pymologie Haus --json
-pymologie Haus --max-depth 3
+pymologie house
+pymologie house --json
+pymologie house --max-depth 3
+
+pymologie --download ta                         # once, before first use
 pymologie --language ta குரு
 pymologie --language sa गुरु
 pymologie --language te తెలుగు
@@ -146,23 +183,22 @@ pymologie --language ta guru --transliterate    # Latin input, romanized output
 
 ### Where the data comes from
 
-The bundled per-language CSVs are filtered from
+The per-language CSVs are filtered from
 [droher/etymology-db](https://github.com/droher/etymology-db), a
 Wiktionary-derived graph of etymological relationships covering ~2900
 languages. `scripts/build_dataset.py` walks that dump outward from each
-bundled language's terms and writes just the reachable rows into
-`src/pymologie/resources/`, which is what the pip package actually ships.
+language's terms and writes just the reachable rows into
+`src/pymologie/resources/`. Only `en.csv` actually ships inside the pip
+package — the rest stay committed in this repo and are fetched by
+`download_language()` on demand (see
+[Downloading language packs](#downloading-language-packs)).
 
-To regenerate the bundled data yourself (e.g. after a newer etymology-db
-release), download that project's CSV dump and run:
+To regenerate the data yourself (e.g. after a newer etymology-db release,
+or to add a language), download that project's CSV dump and run:
 
 ```
-python scripts/build_dataset.py path/to/etymology-db.csv
+python scripts/build_dataset.py path/to/etymology-db.csv --languages English --code en
 ```
 
-## MIT Lizenz
-Jedem, der eine Kopie dieser Software und der zugehörigen Dokumentationsdateien (die „Software“) erhält, wird hiermit kostenlos die Erlaubnis erteilt, ohne Einschränkung mit der Software zu handeln, einschließlich und ohne Einschränkung der Rechte zur Nutzung, zum Kopieren, Ändern, Zusammenführen, Veröffentlichen, Verteilen, Unterlizenzieren und/oder Verkaufen von Kopien der Software, und Personen, denen die Software zur Verfügung gestellt wird, dies unter den folgenden Bedingungen zu gestatten:
-
-Der obige Urheberrechtshinweis und dieser Genehmigungshinweis müssen in allen Kopien oder wesentlichen Teilen der Software enthalten sein.
-
-Die Software wird ohne Mängelgewähr und ohne jegliche Ausdrückliche oder Stillschweigende gewährleistung, einschließlich, aber nicht beschränkt auf die Gewährleistung der Marktgängigkeit, der Eignung für einen bestimmten Zweck und der Nichtverletzung von rechten Dritter, zur verfügung gestellt. Die Autoren oder Urheberrechtsinhaber sind in keinem Fall haftbar für Ansprüche, Schäden oder andere Verpflichtungen, ob in einer Vertrags- oder Haftungsklage, einer unerlaubten Handlung oder anderweitig, die sich aus oder in Verbindung mit der Software oder der Nutzung oder anderen geschäften mit der Software ergeben. 
+## Liscence 
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

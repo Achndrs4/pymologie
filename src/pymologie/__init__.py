@@ -1,24 +1,29 @@
-"""pymologie: etymology trees for German, Tamil, Sanskrit, Telugu, Malayalam, and Kannada words.
+"""pymologie: etymology trees for English (bundled) plus German, Tamil,
+Sanskrit, Telugu, Malayalam, and Kannada words (downloaded on demand).
 
     >>> import pymologie
-    >>> print(pymologie.tree("Haus"))
-    Haus
-    ├── hūs (Middle High German, 1050 CE - 1500 CE)
-    ├── hūs (Old High German, 750 CE - 1050 CE)
-    ├── *hūs (Proto-West Germanic, before 500 CE (unconfirmed))
-    └── *hūsą (Proto-Germanic, 500 BCE - 500 CE)
+    >>> print(pymologie.tree("house"))
+    house
+    ├── hous (Middle English, 1150 CE - 1500 CE)
+    ├── hūs (Old English, 450 CE - 1150 CE)
+    ├── *hūsą (Proto-Germanic, 500 BCE - 500 CE)
+    └── *(s)kews- (Proto-Indo-European, 4500 BCE - 2500 BCE)
 
+    >>> pymologie.download_language("sa")   # one-time, per language
     >>> print(pymologie.tree("मरण", language="sa"))
 """
 
 from collections import Counter
+from importlib.metadata import version as _pkg_version
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 from .etymology import LANGUAGES, Etymology
+from .etymology import download_language as download_language
+from .packs import LanguagePackNotFoundError
 from .transliteration import transliterate_text as transliterate
 from .tree import Node, Origin
 
-__version__ = "2.1.0"
+__version__ = _pkg_version("pymologie")
 __all__ = [
     "Etymology",
     "Node",
@@ -28,6 +33,8 @@ __all__ = [
     "origins",
     "analyze",
     "transliterate",
+    "download_language",
+    "LanguagePackNotFoundError",
 ]
 
 _defaults: Dict[Tuple[str, bool], Etymology] = {}
@@ -44,7 +51,7 @@ def _default_etymology(language: str, transliterate_output: bool) -> Etymology:
 
 def tree(
     word: str,
-    language: str = "de",
+    language: str = "en",
     *,
     transliterate: bool = False,
     max_depth: int = 10,
@@ -61,7 +68,7 @@ def tree(
 
 def origins(
     word: str,
-    language: str = "de",
+    language: str = "en",
     *,
     transliterate: bool = False,
     settings: Optional[Etymology] = None,
@@ -73,7 +80,7 @@ def origins(
 
 def analyze(
     words: Iterable[str],
-    language: str = "de",
+    language: str = "en",
     *,
     transliterate: bool = False,
     settings: Optional[Etymology] = None,

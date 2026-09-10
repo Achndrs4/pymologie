@@ -4,15 +4,18 @@ from __future__ import annotations
 
 import csv
 from collections import Counter
-from importlib import resources
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Union
 
+from .packs import LanguagePackNotFoundError, download_language as _download_pack, resolve_resource
 from .transliteration import annotate_transliteration, transliterate_text
 from .tree import Node, Origin, build_tree, map_tree
 
-#: Supported language codes and the bundled CSV each one loads.
+#: Supported language codes and the CSV each one loads. Only "en" ships
+#: inside the pip package (see packs.BUNDLED_LANGUAGES) -- the rest are
+#: fetched on demand via download_language().
 LANGUAGES: Dict[str, str] = {
+    "en": "en.csv",
     "de": "de.csv",
     "ta": "ta.csv",
     "sa": "sa.csv",
@@ -20,6 +23,25 @@ LANGUAGES: Dict[str, str] = {
     "ml": "ml.csv",
     "kn": "kn.csv",
 }
+
+#: Languages whose script is already Latin, so no reverse transliteration
+#: index or output romanization applies to them.
+_LATIN_SCRIPT_LANGUAGES = {"de", "en"}
+
+
+def download_language(language: str, *, force: bool = False) -> Path:
+    """Download and cache the CSV for ``language`` (see :data:`LANGUAGES`).
+
+    Raises :class:`ValueError` for an unknown language code, or
+    :class:`~pymologie.packs.LanguagePackNotFoundError` if the download
+    itself fails (e.g. no matching tag for the installed version).
+    """
+    try:
+        filename = LANGUAGES[language]
+    except KeyError:
+        available = ", ".join(sorted(LANGUAGES))
+        raise ValueError(f"unknown language {language!r}; available: {available}") from None
+    return _download_pack(language, filename, force=force)
 
 
 class Etymology:
@@ -45,7 +67,7 @@ class Etymology:
 
     def __init__(
         self,
-        language: str = "de",
+        language: str = "en",
         data_path: Optional[Union[str, Path]] = None,
         transliterate: bool = False,
     ) -> None:
@@ -65,9 +87,7 @@ class Etymology:
             except KeyError:
                 available = ", ".join(sorted(LANGUAGES))
                 raise ValueError(f"unknown language {language!r}; available: {available}") from None
-            context = resources.files("pymologie.resources").joinpath(filename).open(
-                "r", encoding="utf-8", newline=""
-            )
+            context = resolve_resource(language, filename)
         with context as file:
             reader = csv.reader(file)
             next(reader, None)  # header
@@ -78,7 +98,7 @@ class Etymology:
 
     @staticmethod
     def _build_latin_index(data: Dict[str, List[Origin]], language: str) -> Dict[str, List[str]]:
-        if language == "de":
+        if language in _LATIN_SCRIPT_LANGUAGES:
             return {}
         index: Dict[str, List[str]] = {}
         for term in data:

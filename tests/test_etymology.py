@@ -3,7 +3,8 @@ from pathlib import Path
 import pytest
 
 import pymologie
-from pymologie import LANGUAGES, Etymology, Node, Origin
+from pymologie import LANGUAGES, Etymology, LanguagePackNotFoundError, Node, Origin
+from pymologie.packs import BUNDLED_LANGUAGES
 from pymologie.transliteration import annotate_transliteration
 
 FIXTURE = Path(__file__).parent / "fixtures" / "mini_etymologie.csv"
@@ -44,10 +45,22 @@ def test_unknown_language_raises() -> None:
         Etymology(language="xx")
 
 
-@pytest.mark.parametrize("language", sorted(LANGUAGES))
+@pytest.mark.parametrize("language", sorted(BUNDLED_LANGUAGES))
 def test_bundled_dataset_loads_and_is_non_empty(language: str) -> None:
     etymology = Etymology(language=language)
     assert len(etymology._data) > 0
+
+
+def test_default_language_is_english() -> None:
+    assert Etymology().language == "en"
+
+
+def test_non_bundled_language_without_download_raises_language_pack_error(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("PYMOLOGIE_CACHE_DIR", str(tmp_path))
+    with pytest.raises(LanguagePackNotFoundError, match="pymologie download de"):
+        Etymology(language="de")
 
 
 def test_native_script_lookup_is_unchanged(translit_etymology: Etymology) -> None:
